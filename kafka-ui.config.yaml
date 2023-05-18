@@ -1,0 +1,5 @@
+kafka:
+  clusters:
+    - name: local
+      defaultKeySerde: String
+      defaultValueSerde: String
