@@ -1,7 +1,7 @@
 package com.example
 package orders.producer
 
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import play.api.libs.json._
 
 import java.util.Properties
@@ -34,6 +34,11 @@ object OrderProducer {
      *
      * Publish each order status update to the order-status topic. The records should be in json format.
      */
+    updates.foreach { update =>
+      val updateJson = Json.toJson[OrderStatusUpdate](update).toString()
+      val record = new ProducerRecord(topic, update.id.toString, updateJson)
+      producer.send(record)
+    }
   }
 
   def main(args: Array[String]): Unit = {

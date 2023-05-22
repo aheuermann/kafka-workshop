@@ -2,9 +2,12 @@ package com.example
 package orders.sink
 
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
+import play.api.libs.json._
 import scalikejdbc._
 
-import java.util.Properties
+import java.time.Duration
+import java.util.{Collections, Properties}
+import scala.jdk.CollectionConverters._
 
 object PostgresSinkConsumer {
 
@@ -53,5 +56,38 @@ object PostgresSinkConsumer {
      * 3. Commit the message offset
      *
      */
+    consumer.subscribe(Collections.singletonList(topic))
+
+    try {
+      while (true) {
+        val records = consumer.poll(Duration.ofMillis(100)).asScala
+
+        val orderStatusUpdates = records
+          .map(record => Json.parse(record.value).as[OrderStatus])
+
+        val dedupedEntities = orderStatusUpdates
+          .groupBy(_.id)
+          .values
+          .map(_.last)
+
+        if (dedupedEntities.nonEmpty) {
+          val batchParams: Seq[Seq[Any]] = dedupedEntities.map(e => Seq(e.id, e.accountId, e.status, e.timestamp)).toSeq
+
+          val sqlQuery =
+            sql"""
+            INSERT INTO order_status (id, account_id, status, timestamp)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (id) DO UPDATE
+            SET account_id = EXCLUDED.account_id,
+              status = EXCLUDED.status,
+              timestamp = EXCLUDED.timestamp
+           """
+
+          sqlQuery.batch(batchParams: _*).apply()
+        }
+      }
+    } finally {
+      consumer.close()
+    }
   }
 }
