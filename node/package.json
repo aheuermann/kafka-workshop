@@ -12,8 +12,8 @@
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
     "run:producer": "npx ts-node src/orders/order-status-producer.ts",
-    "run:sink": "npx ts-node src/orders/sink/order-status-sink.ts",
-    "run:sink-3-instance": "npm-run-all --parallel run:sink run:sink run:sink",
+    "run:consumer": "npx ts-node src/orders/consumer/order-status-sink-consumer.ts",
+    "run:consumer-3-instances": "npm-run-all --parallel run:consumer run:consumer run:consumer",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

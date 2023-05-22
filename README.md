@@ -78,7 +78,7 @@ Once you have completed both parts of the exercise, you should be able to run th
 
 When the `public.order_status` table contains 500 records, and all of them are in the "CLOSED" status, you have successfully completed the workshop.
 
-Good luck, and have fun learning about Kafka, producers, consumers, and Postgres sinks!
+Good luck, and have fun learning about Kafka, producers, consumers!
 
 ## Troubleshooting
 

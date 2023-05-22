@@ -11,8 +11,8 @@ See the [root readme](../README.md) for more information.
 
 ### Running Consumer Locally
 
-`npm run run:sink`
+`npm run run:consumer`
 
 Run 3 instances of sink consumer.
 
-`npm run run:sink-3-instance`
+`npm run run:consumer-3-instances`
