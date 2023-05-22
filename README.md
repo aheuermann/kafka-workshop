@@ -46,7 +46,7 @@ Look for `PRODUCER_START` in the project of your choice. If you haven't already,
 - `./scripts/start_services.sh` - start Kafka, Kafka UI, and PostgresQL
 - `./scripts/create_topics.sh` - create the `order-status` topic
 
-Our Kafka producer will read order status updates from a txt file (`./data/order-status-updates.txt`) and publish each record to the `order-status` topic. The data looks like this:
+Our Kafka producer will read order status updates from a txt file (`./data/order-status-updates.txt`, the scala project uses `scala/src/main/resources/order-status-updates.txt`) and publish each record to the `order-status` topic. The data looks like this:
 
 ```json
 {

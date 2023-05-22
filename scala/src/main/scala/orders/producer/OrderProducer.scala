@@ -12,17 +12,14 @@ import scala.io.{BufferedSource, Source}
  */
 object OrderProducer {
   val topic = "order-status"
-  val updatesFile = "../../../../../../data/order-status-updates.txt"
+  // load from resources file
+  val updatesFile = "order-status-updates.txt"
 
   val props = new Properties()
   props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092")
   props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
   props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
   val producer = new KafkaProducer[String, String](props)
-
-  private def loadFile(path: String): BufferedSource = {
-    Source.fromFile(path)
-  }
 
   /**
    * Publish the sequence of order updates to the "order-status" topic.
@@ -40,7 +37,7 @@ object OrderProducer {
   }
 
   def main(args: Array[String]): Unit = {
-    val orderStatusUpdates = loadFile(updatesFile).getLines.toList.map { line =>
+    val orderStatusUpdates = Source.fromResource(updatesFile).getLines.toList.map { line =>
       Json.parse(line).as[OrderStatusUpdate]
     }
     publishOrderStatusUpdates(orderStatusUpdates)
