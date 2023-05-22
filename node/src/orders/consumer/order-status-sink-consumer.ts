@@ -30,6 +30,21 @@ process.on('SIGTERM', () => {
   shutdown().catch((err) => console.log(`Error on shutdown: ${err}`));
 });
 
+/**
+ * Dedupe the records by id, prefering the last record (latest)
+ * @param records
+ * @returns
+ */
+function dedupeByIdPreferLast(records: OrderStatusUpdate[]) {
+  const result = new Map<number, OrderStatusUpdate>();
+
+  for (const record of records) {
+    result[record.id] = record;
+  }
+  // convert the object back to array
+  return Object.values(result);
+}
+
 async function startConsumer(): Promise<void> {
   /**
    * CONSUMER_START
@@ -47,6 +62,38 @@ async function startConsumer(): Promise<void> {
    * 5. Commit the message offset
    *
    */
+  // connect to the database
+  await AppDataSource.initialize();
+
+  // connect to kafka and subscribe to the topic
+  await consumer.connect();
+  await consumer.subscribe({ topic: CONSUMED_TOPIC, fromBeginning: true });
+
+  async function eachBatch({ batch, resolveOffset, heartbeat }): Promise<void> {
+    const entities = dedupeByIdPreferLast(batch.messages.map((message) => JSON.parse(message.value.toString())));
+    try {
+      await AppDataSource.getRepository(OrderStatusEntity)
+        .createQueryBuilder()
+        .insert()
+        .into(OrderStatusEntity)
+        .values(entities)
+        .orUpdate(['status', 'account_id', 'timestamp', 'created_at', 'updated_at'], ['id'], {})
+        .execute();
+      await resolveOffset(batch.lastOffset());
+      await heartbeat();
+    } catch (err) {
+      console.log(err);
+      await shutdown();
+    }
+  }
+
+  // start consuming messages
+  await consumer.run({
+    autoCommit: true,
+    eachBatchAutoResolve: false,
+    autoCommitInterval: 5000, // commit every 5 sec (at most)
+    eachBatch,
+  });
 }
 
 startConsumer().catch((e) => {
